@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label, input, select {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .history {
+            margin-top: 40px;
+        }
+        .history h2 {
+            text-align: center;
+        }
+        .history table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .history th, .history td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .history th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>QR Code Generator</h1>
+        <form id="qr-form">
+            <label for="qr_data">QR Code Data:</label>
+            <input type="text" id="qr_data" name="qr_data" required>
+            
+            <label for="fill_color">Fill Color:</label>
+            <input type="text" id="fill_color" name="fill_color" value="#000000" required>
+            
+            <label for="background_color">Background Color:</label>
+            <input type="text" id="background_color" name="background_color" value="#FFFFFF" required>
+            
+            <label for="error_correction">Error Correction:</label>
+            <select id="error_correction" name="error_correction">
+                <option value="L">Low (L)</option>
+                <option value="M">Medium (M)</option>
+                <option value="Q">Quartile (Q)</option>
+                <option value="H">High (H)</option>
+            </select>
+            
+            <label for="border_width">Border Width:</label>
+            <input type="number" id="border_width" name="border_width" value="4" required>
+            
+            <label for="box_size">Box Size:</label>
+            <input type="number" id="box_size" name="box_size" value="10" required>
+            
+            <button type="submit">Generate QR Code</button>
+        </form>
+        
+        <div class="qr-code" id="qr-code"></div>
+        
+        <div class="history">
+            <h2>QR Code History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>QR Data</th>
+                        <th>Generated At</th>
+                        <th>QR Code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in history %}
+                    <tr>
+                        <td>{{ record.qr_data }}</td>
+                        <td>{{ record.generated_at }}</td>
+                        <td><img src="{{ record.img_data }}" alt="QR Code" width="100"></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('qr-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            var qr_data = document.getElementById('qr_data').value;
+            var fill_color = document.getElementById('fill_color').value;
+            var background_color = document.getElementById('background_color').value;
+            var error_correction = document.getElementById('error_correction').value;
+            var border_width = document.getElementById('border_width').value;
+            var box_size = document.getElementById('box_size').value;
+            
+            fetch('/generate_qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    qr_data: qr_data,
+                    fill_color: fill_color,
+                    background_color: background_color,
+                    error_correction: error_correction,
+                    border_width: border_width,
+                    box_size: box_size
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.img_data) {
+                    document.getElementById('qr-code').innerHTML = '<img src="' + data.img_data + '" alt="Generated QR Code">';
+                } else if (data.error) {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
